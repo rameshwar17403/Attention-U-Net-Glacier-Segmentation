@@ -10,7 +10,7 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
     for patches, masks in dataloader:
         patches, masks = patches.to(device), masks.to(device)
         
-        optimizer.zero_grade() if hasattr(optimizer, 'zero_grade') else optimizer.zero_grad()
+        optimizer.zero_grad()
         logits = model(patches)
         loss = criterion(logits, masks)
         loss.backward()

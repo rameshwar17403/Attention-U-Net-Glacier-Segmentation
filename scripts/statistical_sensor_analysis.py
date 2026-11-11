@@ -644,7 +644,12 @@ def main():
     thresh = args.threshold if args.threshold is not None else cfg.get("inference", {}).get("threshold", 0.70)
 
     # Initialize evaluator
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
     evaluator = SensorEvaluator(checkpoint_path=args.checkpoint, device=device)
     stat_engine = GlacierStatisticalEngine(alpha=args.alpha, bootstrap_iters=args.bootstrap_iters)
 

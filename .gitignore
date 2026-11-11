@@ -31,7 +31,9 @@ wheels/
 .installed.cfg
 *.egg
 
-# Large satellite rasters & model checkpoints
+# Large satellite rasters, raw downloads & model checkpoints
+data/raw/
+data/patches/*.npy
 data/satellite_patches/
 outputs/checkpoints/*.pth
 

@@ -1,0 +1,2 @@
+dataset_patches,threshold,overall_dice,overall_iou,overall_precision,overall_recall,overall_f1,total_true_positives,total_false_positives,total_false_negatives,total_true_negatives
+32,0.5,0.6925268926732655,0.5296681735115831,0.6596952466138407,0.7287976185644558,0.6925268876856441,413022,213058,153695,1317377
