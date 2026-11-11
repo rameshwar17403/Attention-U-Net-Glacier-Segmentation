@@ -45,11 +45,16 @@ def main():
     print(f"[+] Evaluating on {len(dataset)} genuine patches from '{args.data_dir}'.")
 
     model = AttentionUNet(in_channels=8, out_channels=1).to(device)
-    if os.path.exists(args.checkpoint):
+    if not os.path.exists(args.checkpoint):
+        raise FileNotFoundError(
+            f"[!] Error: Model checkpoint '{args.checkpoint}' not found. "
+            f"Evaluation using uninitialized or random weights is strictly prohibited. Run scripts/train.py first."
+        )
+    try:
         model.load_state_dict(torch.load(args.checkpoint, map_location=device))
-        print(f"[+] Loaded weights from {args.checkpoint}")
-    else:
-        print(f"[!] Warning: Checkpoint {args.checkpoint} not found. Running with initial weights.")
+        print(f"[+] Successfully loaded trained model weights from: {args.checkpoint}")
+    except Exception as e:
+        raise RuntimeError(f"[!] Critical Error: Failed loading checkpoint '{args.checkpoint}': {e}")
 
     model.eval()
 

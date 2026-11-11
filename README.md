@@ -44,20 +44,30 @@ Accurate delineation of alpine glaciers is critical for assessing cryospheric fr
 
 ---
 
-## 🏔️ 2. Study Area: Gangotri Glacier Basin
+## 🏔️ 2. Study Area: Gangotri Glacier Basin & RGI Region Resolution
 
 - **Geographical Coordinates**: $30.80^\circ\text{N} - 31.05^\circ\text{N}$, $79.05^\circ\text{E} - 79.30^\circ\text{E}$
 - **Geographic Location**: Uttarkashi District, Uttarakhand, India (Garhwal Himalaya).
 - **Glaciological Importance**: Gangotri is one of the largest valley glaciers in the Himalayas (~30 km length, >120 km² area), feeding the Bhagirathi River (a primary headstream of the Ganges). It features clean accumulation ice, heavily debris-mantled ablation zones, and extensive lateral moraines.
+- **RGI Region Resolution (Region 15 vs. Region 14)**:
+  - While early working notes occasionally referenced Region 14 (South Asia West), Gangotri Glacier (snout at 30.93°N, 79.08°E, extending southeast to Chaukhamba peaks) is officially cataloged in **Randolph Glacier Inventory (RGI 6.0) Region 15: South Asia East** under ID **`RGI60-15.06881`**.
+  - Region 14 terminates westward in Himachal Pradesh and the Indus Basin and contains zero glaciers within the Gangotri basin.
+  - All ground truth masks in this project are rigorously derived from official RGI 6.0 Region 15 vector shapefiles (100 intersecting glacier outlines in the basin).
 - **Projected Coordinate Reference System**: WGS 84 / UTM Zone 44N (`EPSG:32644`).
 
 ---
 
 ## 🛰️ 3. Genuine Satellite & Reference Data Sources
 
-All experiments use authentic, unsimulated satellite observations acquired during the ablation minimum season (October 2024):
+All experiments use authentic, unsimulated satellite observations acquired during the post-monsoon ablation minimum season (October 2024), co-registered to a **NASA Harmonized Landsat-Sentinel (HLS) Common 30m Grid**:
 
-| Dataset | Platform / Sensor | Product Level | Scene Identifier | Acquisition Date | Cloud Cover | Source Provider |
+| Dataset | Platform / Sensor | Product Level | Scene Identifier | Acquisition Date | Cloud Cover | Source Provider | Harmonization Grid |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Sentinel-2 MSI** | Sentinel-2B | Level-2A Surface Reflectance | `S2B_44RLV_20241015_0_L2A` | Oct 15, 2024 | **0.02%** | AWS Earth Search COG Archive | Resampled to 30.0m (Bilinear) |
+| **Landsat 9 OLI-2** | Landsat 9 | Level-2 Surface Reflectance | `LC09_L2SP_146039_20241026_02_T1` | Oct 26, 2024 | **1.96%** | Microsoft Planetary Computer STAC | Aligned to 30.0m (Native 30m) |
+| **Glacier Ground Truth** | RGI 6.0 | Vector Outlines | `15_rgi60_SouthAsiaEast.shp` | Multi-temporal consensus | N/A | GLIMS / OGGM Mirror | Rasterized at 30.0m (UTM 44N) |
+
+> **Pairing & Temporal Delta:** Both acquisitions are separated by only **11 days** in October 2024 (stable autumn cryospheric state prior to winter snowfall), guaranteeing that transient snow accumulation does not introduce spurious bias. Zero synthetic or simulated data is used.
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Sentinel-2** | Sentinel-2B MSI | Level-2A (Surface Reflectance) | `S2B_44RLV_20241015_0_L2A` | Oct 15, 2024 | 0.02% | AWS Earth Search COG Archive |
 | **Landsat 9** | Landsat 9 OLI-2 | Level-2 (Surface Reflectance) | `LC09_L2SP_146039_20241026_02_T1` | Oct 26, 2024 | 1.96% | Microsoft Planetary Computer STAC |
@@ -113,54 +123,62 @@ $$\mathbf{F}_{\text{out}} = \text{CBAM}(\mathbf{x} \cdot \sigma(\mathbf{W}_g \ma
 
 ---
 
-## 🛰️ 7. Automated Data Acquisition & Preprocessing Pipeline
+## 🛰️ 7. Automated Data Acquisition & Harmonization Pipeline
 
 Run `scripts/acquire_satellite_data.py` to reproduce the exact dataset:
-- Queries STAC endpoints (AWS Element84 and Planetary Computer).
-- Performs windowed Cloud-Optimized GeoTIFF (COG) reads directly over HTTPS without local bulk downloads.
-- Aligns both sensors onto an identical 10m UTM Zone 44N grid ($2434 \times 2810$ pixels).
-- Downloads RGI 6.0 Region 15 shapefile and rasterizes the 100 glacier polygons covering Gangotri basin ($2,741,517$ glacier pixels, $40.08\%$ of basin).
-- Generates 32 clean non-overlapping $256 \times 256$ cryospheric patches and masks.
-- Exports metadata audit to `data/satellite_patches/acquisition_metadata.json`.
+- **Spatial Harmonization Standard**: Common 30.0m UTM Zone 44N grid (`EPSG:32644`) following NASA Harmonized Landsat-Sentinel (HLS) guidelines ($938 \times 813$ pixels, affine transform snapped to integer 30m coordinates).
+- **Public STAC Endpoints**:
+  - Copernicus Sentinel-2 MSI Level-2A via AWS Earth Search (`S2B_44RLV_20241015_0_L2A`, 0.02% cloud cover).
+  - Landsat 9 OLI-2 Level-2 via Microsoft Planetary Computer STAC (`LC09_L2SP_146039_20241026_02_T1`, 1.96% cloud cover).
+  - Temporal separation is only **11 days** (Oct 15 vs Oct 26, 2024) during post-monsoon ablation minimum.
+- **Zero Synthetic Fallback**: Complete removal of synthetic Landsat simulation (`l8 = s2 * 1.012`). If genuine Landsat data cannot be acquired, execution immediately halts.
+- **RGI 6.0 Region 15 Ground Truth**: Rasterizes 100 intersecting glacier outlines covering Gangotri basin (Glacier ID `RGI60-15.06881`, 305,533 glacier pixels, 40.06% of basin).
+- **Patch Extraction**: Generates 24 clean, spatially matched, strided $256 \times 256$ cryospheric patches and masks.
+- **Auditing**: Exports metadata to `data/satellite_patches/acquisition_metadata.json`.
 
 ---
 
 ## 📈 8. Training & Evaluation Methodology
 
-The model was trained on genuine Sentinel-2 Level-2A patches with RGI 6.0 masks using Apple Silicon Metal (MPS) GPU acceleration:
+The model was trained on genuine 30m Sentinel-2 Level-2A patches with RGI 6.0 Region 15 masks using Apple Silicon Metal (MPS) GPU acceleration:
 - **Optimizer**: AdamW ($\text{lr} = 0.0005$, $\text{weight\_decay} = 0.0001$)
 - **Batch Size**: 4 | **Epochs**: 15
-- **Convergence**:
-  - Best Validation Dice: **0.8100** (Epoch 8)
-  - Validation Loss: **0.2993** (Epoch 14)
-  - Overall Test Dice: **0.6925** | Overall IoU: **0.5297**
-  - Confusion Matrix: $\text{TP} = 413,022$, $\text{FP} = 213,058$, $\text{FN} = 153,695$, $\text{TN} = 1,317,377$
+- **Convergence Progression**:
+  - Best Validation Dice: **0.7574** (Epoch 14)
+  - Validation Loss: **0.3037** (Epoch 14)
+- **Evaluation Across All 24 Genuine Patches** (`scripts/evaluate.py`):
+  - **Overall Dice**: **0.7966** (Per-patch mean: 0.7838, median: 0.7949)
+  - **Overall IoU**: **0.6619** (Per-patch mean: 0.6494, median: 0.6596)
+  - **Overall Precision**: **0.8810** (Per-patch mean: 0.8805)
+  - **Overall Recall**: **0.7269** (Per-patch mean: 0.7106)
+  - **Overall F1 Score**: **0.7966**
+  - **Confusion Matrix**: $\text{TP} = 338,340$, $\text{FP} = 45,688$, $\text{FN} = 127,142$, $\text{TN} = 1,061,694$
 
 ---
 
 ## 📊 9. Multi-Satellite Statistical Comparison Results
 
-Using `scripts/statistical_sensor_analysis.py`, 32 matched patches were evaluated under the cross-sensor transfer protocol (Sentinel-2 trained Attention U-Net evaluated on Sentinel-2 10m vs. Landsat 9 30m):
+Using `scripts/statistical_sensor_analysis.py`, 24 matched 30m patches were evaluated under the cross-sensor transfer protocol (Attention U-Net trained on Sentinel-2 S30 evaluated on Sentinel-2 S30 vs. Landsat 9 L30):
 
-### 9.1 Metric Distributions (32 Matched Patches)
+### 9.1 Metric Distributions (24 Paired 30m Patches)
 
-| Metric | Sentinel-2 MSI (10m) Mean ± SD | Sentinel-2 Median [IQR] | Landsat 9 OLI (30m) Mean ± SD | Landsat 9 Median [IQR] | Mean Difference (S2 − L8) | 95% Bootstrap CI |
+| Metric | Sentinel-2 MSI (S30) Mean ± SD | Sentinel-2 Median [IQR] | Landsat 9 OLI (L30) Mean ± SD | Landsat 9 Median [IQR] | Mean Difference (S2 − L8) | 95% Bootstrap CI |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Dice Score** | **0.5037 ± 0.337** | **0.6280** [0.730] | 0.4645 ± 0.336 | 0.5627 [0.722] | **+0.0391** (+3.91%) | $[-0.0220, +0.1000]$ |
-| **IoU Score** | **0.4000 ± 0.294** | **0.4578** [0.609] | 0.3639 ± 0.293 | 0.3915 [0.589] | **+0.0360** (+3.60%) | $[-0.0234, +0.0917]$ |
-| **Precision** | 0.5255 ± 0.341 | 0.6694 [0.672] | 0.5063 ± 0.352 | 0.6573 [0.716] | +0.0192 (+1.92%) | $[-0.0401, +0.0695]$ |
-| **Recall** | **0.5759 ± 0.388** | **0.7400** [0.815] | 0.5213 ± 0.390 | 0.6536 [0.803] | **+0.0545** (+5.45%) | $[-0.0248, +0.1370]$ |
+| **Dice Score** | **0.7838 ± 0.070** | **0.7949** [0.088] | 0.6236 ± 0.080 | 0.6317 [0.106] | **+0.1601** (+16.01%) | $[+0.1292, +0.1882]$ |
+| **IoU Score** | **0.6494 ± 0.091** | **0.6596** [0.122] | 0.4578 ± 0.085 | 0.4618 [0.116] | **+0.1916** (+19.16%) | $[+0.1542, +0.2260]$ |
+| **Precision** | **0.8805 ± 0.052** | **0.8848** [0.070] | 0.6310 ± 0.161 | 0.5789 [0.246] | **+0.2495** (+24.95%) | $[+0.1779, +0.3198]$ |
+| **Recall** | **0.7106 ± 0.091** | **0.7266** [0.136] | 0.6691 ± 0.155 | 0.6157 [0.264] | +0.0415 (+4.15%) | $[-0.0188, +0.0984]$ |
 
 ### 9.2 Hypothesis Testing & Agreement Analysis
 
 | Test Name | Statistic | $p$-value | Significant ($\alpha=0.05$)? | Interpretation |
 | :--- | :--- | :--- | :--- | :--- |
-| **Shapiro-Wilk Test** | $W = 0.771$ | $p = 3.04 \times 10^{-5}$ | Non-Normal | Metric differences violate normality; non-parametric tests are required. |
-| **Wilcoxon Signed-Rank** | $W = 100.0$ | **$p = 0.0325$** | **Yes ($p < 0.05$)** | **Sentinel-2 exhibits statistically significant superior Dice over Landsat 9.** |
-| **Paired Student's t-test** | $t = 1.244$ | $p = 0.2229$ | No | Parametric test invalid due to distribution skewness. |
-| **Mann-Whitney U Test** | $U = 538.0$ | $p = 0.7312$ | No | Demonstrates why pairing is necessary; independent test loses spatial matching power. |
-| **Cohen's $d$ Effect Size** | $d = 0.220$ | N/A | Small Positive | Quantifies positive advantage of 10m spatial resolution. |
-| **Bland-Altman Agreement** | Bias = +0.039 | LoA: $[-0.309, +0.387]$ | 93.75% in LoA | High sensor concordance with systematic bias favoring Sentinel-2 along boundaries. |
+| **Shapiro-Wilk Test** | $W = 0.949$ | $p = 0.2522$ | Normal | Paired differences follow an approximately normal distribution. |
+| **Wilcoxon Signed-Rank** | $W = 2.0$ | **$p = 3.58 \times 10^{-7}$** | **Yes ($p < 0.001$)** | **Sentinel-2 demonstrates statistically significant superior Dice over Landsat 9.** |
+| **Paired Student's t-test** | $t = 10.363$ | **$p = 3.88 \times 10^{-10}$** | **Yes ($p < 0.001$)** | Highly significant positive mean difference (+0.1601 Dice). |
+| **Mann-Whitney U Test** | $U = 536.0$ | $p = 3.34 \times 10^{-7}$ | Yes | Independent test confirms strong distribution divergence between sensors. |
+| **Cohen's $d$ Effect Size** | $d = 2.115$ | N/A | Very Large Positive | Quantifies substantial cross-sensor transfer degradation without domain adaptation. |
+| **Bland-Altman Agreement** | Bias = +0.1601 | LoA: $[+0.0118, +0.3085]$ | 95.8% in LoA | High sensor concordance (23/24 patches within limits of agreement). |
 
 ---
 
@@ -278,22 +296,24 @@ python scripts/statistical_sensor_analysis.py \
 
 | Component | Status | Verification Detail |
 | :--- | :--- | :--- |
-| **Attention U-Net + CBAM** | ✅ Implemented & Tested | Validated in `tests/test_model.py` (9 tests passing) |
+| **Attention U-Net + CBAM** | ✅ Implemented & Tested | Validated in `tests/test_model.py` (9/9 unit tests passing) |
 | **Focal Tversky Loss** | ✅ Implemented & Tested | Validated in `tests/test_losses.py` |
 | **Genuine Sentinel-2 Acquisition** | ✅ Implemented & Tested | S2B L2A (Oct 15, 2024) windowed COG read via AWS Earth Search |
-| **Genuine Landsat 9 Acquisition** | ✅ Implemented & Tested | LC09 L2 (Oct 26, 2024) via Planetary Computer STAC |
-| **RGI 6.0 Ground Truth Masking** | ✅ Implemented & Tested | 100 Gangotri basin polygons rasterized at 10m UTM 44N |
-| **Model Training on Real Data** | ✅ Implemented & Executed | 15 epochs on MPS GPU; Best Val Dice = 0.8100 |
-| **Cross-Sensor Statistical Engine** | ✅ Implemented & Executed | Real inference on 32 patches; Wilcoxon $p = 0.0325$ |
+| **Genuine Landsat 9 Acquisition** | ✅ Implemented & Tested | LC09 L2 (Oct 26, 2024) via Planetary Computer STAC (zero synthetic fallback) |
+| **Common 30m Spatial Harmonization**| ✅ Implemented & Tested | NASA HLS 30m UTM Zone 44N grid ($938 \times 813$ pixels) |
+| **RGI 6.0 Region 15 Ground Truth** | ✅ Implemented & Tested | 100 Gangotri basin polygons rasterized at 30m UTM 44N (RGI60-15.06881) |
+| **Model Training on Real Data** | ✅ Implemented & Executed | 15 epochs on MPS GPU; Best Val Dice = 0.7574, Best Val Loss = 0.3037 |
+| **Mandatory Checkpoint Validation** | ✅ Implemented & Enforced | Evaluation/predict scripts raise hard error if valid weights missing |
+| **Cross-Sensor Statistical Engine** | ✅ Implemented & Executed | 24 paired patches; Wilcoxon $W = 2.0, p = 3.58 \times 10^{-7}$, Cohen's $d = 2.115$ |
 | **Full Regional Transfer (e.g. Karakoram / Alps)** | 🔄 Planned | Documented for future multi-basin generalization |
 
 ---
 
 ## ⚠️ 14. Limitations & Scientific Discussion
 
-1. **Debris-Covered Ice Complexity**: Lateral moraines and thick supraglacial debris mimic adjacent valley rock signatures. While Focal Tversky Loss improves boundary recall, multi-temporal thermal infrared (TIR) or SAR coherence data would further refine debris-covered margins.
-2. **Topographic Shadows**: Deep north-facing cast shadows in steep Himalayan cirques attenuate optical reflectance.
-3. **Sensor Resolution Contrast**: Sentinel-2 (10m) demonstrates a statistically significant +3.91% Dice advantage over Landsat 9 (30m), primarily due to edge boundary pixel mixing at 30m resolution.
+1. **Cross-Sensor Spectral Shift**: Even on an identical 30m spatial grid, transferring a model trained on Sentinel-2 MSI surface reflectance to Landsat 9 OLI leads to a statistically significant decrease in Dice score ($\Delta = -0.1601$, $p < 0.001$). This difference stems from differences in sensor relative spectral response (RSR) functions—particularly in the SWIR and NIR channels—highlighting the necessity of sensor calibration or domain adaptation.
+2. **Debris-Covered Ice Complexity**: Supraglacial debris over the lower Gangotri ablation zone shares similar spectral reflectance with surrounding granitic lateral moraines. While Focal Tversky Loss helps prioritize cryospheric boundaries, multi-temporal thermal infrared (TIRS) or SAR coherence data (Sentinel-1) would further delineate stagnant debris-covered ice.
+3. **Topographic Shadows**: Deep north-facing cast shadows in steep Himalayan relief attenuate optical reflectance across both sensors, slightly increasing false negatives in high-altitude cirques.
 
 ---
 

@@ -275,24 +275,25 @@ class GlacierStatisticalEngine:
 class SensorEvaluator:
     """Manages patch loading, Attention U-Net prediction, and metric collection."""
 
-    def __init__(self, checkpoint_path: str = None, device: str = "cpu"):
-        self.device = torch.device(device if torch.cuda.is_available() and device == "cuda" else "cpu")
+    def __init__(self, checkpoint_path: str, device: str = "cpu"):
+        self.device = torch.device(device)
         self.model = AttentionUNet(in_channels=8, out_channels=1).to(self.device)
-        self.checkpoint_loaded = False
 
-        if checkpoint_path and os.path.exists(checkpoint_path):
-            try:
-                state_dict = torch.load(checkpoint_path, map_location=self.device)
-                self.model.load_state_dict(state_dict)
-                self.model.eval()
-                self.checkpoint_loaded = True
-                print(f"[+] Loaded Attention U-Net weights from: {checkpoint_path}")
-            except Exception as e:
-                print(f"[!] Warning: Failed loading checkpoint ({e}). Operating in evaluation mode.")
-        else:
-            print(f"[!] Warning: No checkpoint found at '{checkpoint_path}'. Initializing model architecture.")
-
-        self.model.eval()
+        if not checkpoint_path or not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(
+                f"[!] Critical Error: Valid trained checkpoint required for statistical analysis. "
+                f"Checkpoint '{checkpoint_path}' does not exist. Evaluation with random weights is strictly prohibited."
+            )
+        try:
+            state_dict = torch.load(checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(state_dict)
+            self.model.eval()
+            print(f"[+] Successfully loaded trained Attention U-Net weights from: {checkpoint_path}")
+        except Exception as e:
+            raise RuntimeError(
+                f"[!] Critical Error: Failed loading model checkpoint weights from '{checkpoint_path}': {e}. "
+                f"Evaluation with uninitialized or random weights is strictly prohibited."
+            )
 
     def predict_patch(self, patch_array: np.ndarray, threshold: float = 0.70) -> tuple:
         """
@@ -517,7 +518,7 @@ def generate_markdown_report(
     content = fr"""# Multi-Satellite Glacier Statistical Analysis Report
 ## Comparative Segmentation Evaluation: Sentinel-2 MSI vs. Landsat 8/9 OLI
 **Project:** Attention U-Net Multispectral Glacier Segmentation Framework  
-**Study Region:** RGI Region 14 – South Asia West (Garhwal Himalaya, Uttarakhand, India)  
+**Study Region:** RGI Region 15 – South Asia East (Garhwal Himalaya, Uttarakhand, India; RGI60-15.06881)  
 **Target Glacier:** Gangotri Glacier Catchment (`30.80°N - 31.05°N, 79.05°E - 79.30°E`)  
 **Reference Dataset:** Randolph Glacier Inventory (RGI 7.0 / RGI 6.0)  
 **Authors:** Piyush Verma, Deepanshu Sahu, Rameshwar Chandravanshi (NIT Raipur)  
@@ -632,7 +633,7 @@ def main():
 
     print("=" * 75)
     print("🛰️ MULTI-SATELLITE STATISTICAL ANALYSIS: SENTINEL-2 MSI vs. LANDSAT 8/9 OLI")
-    print("   Attention U-Net Cryospheric Segmentation Framework (RGI 14 Gangotri Basin)")
+    print("   Attention U-Net Cryospheric Segmentation Framework (RGI 15 Gangotri Basin)")
     print("=" * 75)
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -685,32 +686,15 @@ def main():
         s2_patch = np.load(s2_patch_path)
         gt_mask = np.load(mask_path).astype(np.uint8)
 
-        # Landsat patch loading
-        if has_separate_landsat:
-            l8_patch_path = os.path.join(args.landsat_dir, f"{patch_id}_patch.npy")
-            if os.path.exists(l8_patch_path):
-                l8_patch = np.load(l8_patch_path)
-            else:
-                l8_patch = s2_patch.copy()
-        else:
-            # Calibrated sensor transfer: Landsat 8/9 OLI spectral response mapping
-            # S2: 10m/20m resampled to 30m HLS grid with sensor-specific spectral adjustment
-            l8_patch = s2_patch.copy()
-            # Radiometric scaling adjustment: OLI has slightly narrower NIR (B5) and slightly different SWIR response
-            # Apply physically documented sensor spectral band response difference (Vermote et al. 2016 HLS)
-            l8_patch[0] = l8_patch[0] * 1.012  # Blue
-            l8_patch[1] = l8_patch[1] * 0.994  # Green
-            l8_patch[2] = l8_patch[2] * 1.008  # Red
-            l8_patch[3] = l8_patch[3] * 0.985  # NIR
-            l8_patch[4] = l8_patch[4] * 1.021  # SWIR1
-            l8_patch[5] = l8_patch[5] * 0.991  # SWIR2
-            if l8_patch.shape[0] == 8:
-                # Recompute NDSI & NDVI for Landsat from calibrated bands
-                eps = 1e-8
-                ndsi = (l8_patch[1] - l8_patch[4]) / (l8_patch[1] + l8_patch[4] + eps)
-                ndvi = (l8_patch[3] - l8_patch[2]) / (l8_patch[3] + l8_patch[2] + eps)
-                l8_patch[6] = (ndsi + 1.0) / 2.0
-                l8_patch[7] = (ndvi + 1.0) / 2.0
+        # Landsat patch loading (STRICT: NO SYNTHETIC FALLBACK)
+        l8_patch_path = os.path.join(args.landsat_dir, f"{patch_id}_patch.npy")
+        if not os.path.exists(l8_patch_path):
+            raise FileNotFoundError(
+                f"[!] Error: Missing genuine Landsat patch '{l8_patch_path}' for patch '{patch_id}'. "
+                f"Multi-sensor statistical comparison requires genuine Landsat observations. "
+                f"Synthetic fallback has been completely removed to maintain scientific validity."
+            )
+        l8_patch = np.load(l8_patch_path)
 
         # Predict with Attention U-Net
         s2_probs, s2_bin = evaluator.predict_patch(s2_patch, threshold=thresh)

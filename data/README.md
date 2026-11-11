@@ -6,17 +6,20 @@ This directory manages training, validation, and test patches for the **Attentio
 
 1. **Sentinel-2 MSI Level-2A (Primary Sensor)**
    - Source: Copernicus / AWS Earth Search Cloud-Optimized GeoTIFFs (`sentinel-cogs`)
-   - Bands: B02 (Blue), B03 (Green), B04 (Red), B08 (NIR), B11 (SWIR1), B12 (SWIR2), SCL (Scene Classification Layer)
-   - Native Resolution: 10m (B2-B8), 20m (B11-B12) resampled to 10m grid.
+   - Scene: `S2B_44RLV_20241015_0_L2A` (Acquired Oct 15, 2024; Cloud Cover: 0.02%)
+   - Bands: B02 (Blue), B03 (Green), B04 (Red), B08 (NIR), B11 (SWIR1), B12 (SWIR2), SCL
+   - Harmonization: Resampled to common 30m UTM Zone 44N grid via bilinear interpolation.
 
-2. **Landsat 8/9 OLI Level-2 (Cross-Sensor Comparison)**
-   - Source: USGS / Microsoft Planetary Computer STAC
-   - Bands: B2 (Blue), B3 (Green), B4 (Red), B5 (NIR), B6 (SWIR1), B7 (SWIR2), QA_Pixel
-   - Native Resolution: 30m co-registered to the UTM 44N grid.
+2. **Landsat 9 OLI-2 Level-2 (Cross-Sensor Comparison)**
+   - Source: USGS / Microsoft Planetary Computer STAC (SAS Signed HTTPS)
+   - Scene: `LC09_L2SP_146039_20241026_02_T1` (Acquired Oct 26, 2024; Cloud Cover: 1.96%)
+   - Bands: SR_B2 (Blue), SR_B3 (Green), SR_B4 (Red), SR_B5 (NIR), SR_B6 (SWIR1), SR_B7 (SWIR2)
+   - Harmonization: Native 30m resolution aligned to the identical UTM Zone 44N pixel grid (temporal delta: 11 days).
 
 3. **Ground Truth Glacier Reference Outlines**
-   - Source: Randolph Glacier Inventory (RGI 6.0 Region 15 / Region 14) via OGGM / GLIMS
-   - Polygons are reprojected from EPSG:4326 to UTM Zone 44N (EPSG:32644) and rasterized at 10m resolution.
+   - Source: Randolph Glacier Inventory (RGI 6.0 Region 15: South Asia East) via OGGM / GLIMS mirror
+   - Cataloged Glacier ID: `RGI60-15.06881` (Gangotri Glacier, 121.89 km²) plus 99 surrounding intersecting tributary glaciers.
+   - Polygons are reprojected from EPSG:4326 to UTM Zone 44N (EPSG:32644) and rasterized at exact 30m resolution.
 
 ## Automated Acquisition
 
