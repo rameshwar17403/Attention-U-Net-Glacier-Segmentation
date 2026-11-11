@@ -31,12 +31,39 @@ class HybridBCEDiceLoss(nn.Module):
         return self.alpha * bce_loss + (1 - self.alpha) * dice_loss
 
 
+class TverskyLoss(nn.Module):
+    """
+    Tversky Loss for imbalanced binary segmentation.
+    TI = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
+    Loss = 1 - TI
+    """
+    def __init__(self, alpha=0.5, beta=0.5, smooth=1e-6):
+        super(TverskyLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.smooth = smooth
+
+    def forward(self, logits, targets):
+        probs = torch.sigmoid(logits).view(-1)
+        targets_flat = targets.view(-1)
+
+        tp = (probs * targets_flat).sum()
+        fp = (probs * (1.0 - targets_flat)).sum()
+        fn = ((1.0 - probs) * targets_flat).sum()
+
+        tversky = (tp + self.smooth) / (tp + self.alpha * fp + self.beta * fn + self.smooth)
+        return 1.0 - tversky
+
+
 class FocalTverskyLoss(nn.Module):
-    def __init__(self, alpha=0.3, beta=0.7, gamma=4/3, smooth=1e-6):
+    """
+    Focal Tversky Loss to address high class imbalance and hard negative mining.
+    FTL = (1 - TI)^gamma
+    """
+    def __init__(self, alpha=0.3, beta=0.7, gamma=1.33, smooth=1e-6):
         super(FocalTverskyLoss, self).__init__()
         self.alpha = alpha  # weight for false positives
-        # weight for false negatives (catches debris-covered ice)
-        self.beta = beta
+        self.beta = beta    # weight for false negatives (catches debris-covered ice)
         self.gamma = gamma  # focal parameter
         self.smooth = smooth
 
@@ -48,6 +75,5 @@ class FocalTverskyLoss(nn.Module):
         FP = ((1 - targets) * inputs).sum()
         FN = (targets * (1 - inputs)).sum()
 
-        tversky = (TP + self.smooth) / (TP + self.alpha *
-                                        FP + self.beta * FN + self.smooth)
-        return (1 - tversky)**(1 / self.gamma)
+        tversky = (TP + self.smooth) / (TP + self.alpha * FP + self.beta * FN + self.smooth)
+        return torch.pow(1.0 - tversky, self.gamma)
