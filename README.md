@@ -155,31 +155,39 @@ Each skip connection integrates an Attention Gate enhanced with CBAM:
 ### Independent Test Set Evaluation (2024 Held-Out Scene):
 Evaluated strictly on 180 unseen patches from October 2024 at decision threshold $\tau = 0.50$:
 
-| Evaluation Metric | Mathematical Definition | Experimental Score |
-| :--- | :--- | :--- |
-| **Dice Similarity Coefficient (F1)** | $\frac{2 \cdot \text{TP}}{2 \cdot \text{TP} + \text{FP} + \text{FN}}$ | **0.7966** |
-| **Intersection over Union (IoU)** | $\frac{\text{TP}}{\text{TP} + \text{FP} + \text{FN}}$ | **0.6619** |
-| **Precision** | $\frac{\text{TP}}{\text{TP} + \text{FP}}$ | **0.8810** |
-| **Recall (Sensitivity)** | $\frac{\text{TP}}{\text{TP} + \text{FN}}$ | **0.7269** |
-| **Decision Threshold** | Classification probability cutoff | **0.50** |
+| Evaluation Metric | Mathematical Definition | Test Set Score (Unseen 2024) | Validation Set Score (2023) |
+| :--- | :--- | :--- | :--- |
+| **Dice Similarity Coefficient (F1)** | $\frac{2 \cdot \text{TP}}{2 \cdot \text{TP} + \text{FP} + \text{FN}}$ | **0.6013** | **0.7574** |
+| **Intersection over Union (IoU)** | $\frac{\text{TP}}{\text{TP} + \text{FP} + \text{FN}}$ | **0.4299** | **0.6095** |
+| **Precision** | $\frac{\text{TP}}{\text{TP} + \text{FP}}$ | **0.8694** | **0.8349** |
+| **Recall (Sensitivity)** | $\frac{\text{TP}}{\text{TP} + \text{FN}}$ | **0.4595** | **0.6930** |
+| **Decision Threshold** | Classification probability cutoff | **0.50** | **0.50** |
+
+* **Cumulative Test Confusion Matrix:**
+  * True Positives (TP): **1,141,948**
+  * False Positives (FP): **171,488**
+  * False Negatives (FN): **1,343,143**
+  * True Negatives (TN): **9,139,901**
 
 ---
 
 ## 📈 8. Objective 2: Sentinel-2 vs. Landsat 8/9 Statistical Comparison
 
-756 spatially paired patches from matched ablation acquisitions (October 2024 and October 2023) were analyzed under the NASA HLS 30m UTM 44N grid:
+**756 spatially paired patches** from matched ablation acquisitions (October 2024 and October 2023) were analyzed under the NASA HLS 30m UTM 44N grid:
 
 * **Glacier Extraction Methodology:** Automated Attention U-Net inference complemented by NDSI physical thresholding ($\text{NDSI} \ge 0.40$).
+* **Cross-Sensor Statistical Performance ($N = 756$ Matched Pairs):**
+  * **Sentinel-2 Mean Dice:** **0.4823 ± 0.292** (Median: **0.6008**, 95% Bootstrap CI: `[0.4616, 0.5029]`)
+  * **Landsat 8/9 Mean Dice:** **0.0818 ± 0.166** (Median: **0.0000**, 95% Bootstrap CI: `[0.0700, 0.0936]`)
+  * **Mean Difference ($\Delta = \text{S2} - \text{L8/9}$):** **+0.4005** (+40.05% higher Dice for Sentinel-2, 95% CI: `[+0.3747, +0.4259]`)
 * **Statistical Hypothesis Testing:**
-  * **Paired $t$-test:** $t = 5.82$, $p < 0.001$.
-  * **Wilcoxon Signed-Rank Test:** $W = 12.0$, $p = 3.58 \times 10^{-7}$ (statistically significant sensor disparity).
-  * **Effect Size:** Cohen's $d = 2.115$ (large effect size attributable to Sentinel-2's superior edge resolution along lateral moraines).
+  * **Paired $t$-test:** $t = 30.687$, $\mathbf{p = 6.87 \times 10^{-135} < 0.001}$ (statistically significant positive disparity).
+  * **Wilcoxon Signed-Rank Test:** $W = 13943.0$, $\mathbf{p = 1.36 \times 10^{-90} < 0.001}$ (statistically significant non-parametric difference).
+  * **Mann-Whitney $U$ Test:** $U = 498395.0$, $\mathbf{p = 2.35 \times 10^{-146} < 0.001}$.
+  * **Effect Size:** Cohen's $d = \mathbf{1.116}$ (very large effect size), Cliff's $\delta = \mathbf{0.744}$.
 * **Correlation & Agreement Analysis:**
-  * **Pearson Correlation Coefficient ($r$):** **0.942** ($p < 0.0001$).
-  * **Spearman Rank Correlation ($\rho$):** **0.931** ($p < 0.0001$).
-  * **Mean Absolute Error (MAE):** $0.342\text{ km}^2$ per patch.
-  * **Root Mean Squared Error (RMSE):** $0.489\text{ km}^2$.
-  * **Bland-Altman Mean Bias:** $+0.187\text{ km}^2$ (Sentinel-2 delineates slightly greater debris-covered area due to higher native 10m/20m spatial acuity prior to resampling).
+  * **Mean Absolute Error (MAE):** $0.312$ per patch.
+  * **Bland-Altman Mean Bias:** $+0.4005$ (limits of agreement reflect domain shift between sensor spectral response functions when transferring without adaptation).
 
 ---
 
@@ -237,13 +245,16 @@ Attention-U-Net-Glacier-Segmentation/
 ├── configs/
 │   └── default.yaml                    # Hyperparameter & grid configuration
 ├── data/
-│   ├── dataset_inventory.csv           # Tracked patch inventory catalog
+│   ├── dataset_inventory.csv           # Tracked patch inventory catalog (1,466 rows)
 │   ├── dataset_verification_report.json # Tracked verification report
 │   ├── raw/rgi15/                      # RGI 6.0 Region 15 outlines
 │   ├── patches/                        # [Excluded by .gitignore: 1,466 .npy patches]
 │   └── satellite_patches/              # [Excluded by .gitignore: 756 paired .npy patches]
 ├── docs/
-│   └── DATASET_STORAGE_GUIDE.md        # Google Drive persistent storage guide
+│   ├── ARCHITECTURE.md                 # Attention Gate & CBAM specifications
+│   ├── DATASET_GUIDE.md                # 8-band layout & RGI 15 spatial criteria
+│   ├── DATASET_STORAGE_GUIDE.md        # Google Drive persistent storage guide
+│   └── TRAINING_GUIDE.md               # Training guidelines & loss objectives
 ├── models/
 │   ├── __init__.py
 │   ├── attention_unet.py               # 8-Channel Attention U-Net architecture
@@ -266,14 +277,37 @@ Attention-U-Net-Glacier-Segmentation/
 │   └── statistical_analysis/           # Statistical hypothesis tests & figures
 ├── presentation/
 │   ├── figures/                        # 19 high-resolution scientific diagrams
+│   ├── generated_illustrations/        # Vector architecture & conceptual diagrams
 │   └── final_project_presentation.pptx # Editable 24-slide PowerPoint
+├── results/
+│   ├── comparison_maps/                # Cross-sensor discrepancy & agreement maps
+│   ├── graphs/                         # Training curves, dice/iou distributions
+│   ├── metrics/                        # Evaluated CSVs, hypothesis test results
+│   └── segmentation/                   # Overlay maps & prediction previews
 ├── scripts/
-│   ├── acquire_satellite_data.py       # Core STAC acquisition & harmonization
+│   ├── data_acquisition/
+│   │   ├── acquire_sentinel2.py        # AWS Earth Search STAC fetcher
+│   │   ├── acquire_landsat.py          # Planetary Computer STAC fetcher
+│   │   ├── download_rgi_glaciers.py    # RGI 6.0 Region 15 downloader
+│   │   └── search_scenes.py            # Multi-year scene inventory scanner
+│   ├── preprocessing/
+│   │   ├── harmonize_grid.py           # NASA HLS 30m grid snapping
+│   │   └── extract_patches.py          # 256x256 patch slicer & filter
+│   ├── training/
+│   │   └── train_model.py              # Modular training launcher
+│   ├── evaluation/
+│   │   ├── evaluate_model.py           # Evaluation launcher
+│   │   └── visualize_results.py        # Map & overlay generator
+│   ├── statistical_analysis/
+│   │   └── run_cross_sensor_analysis.py # Cross-sensor comparison launcher
 │   ├── acquire_large_scale_dataset.py  # Multi-temporal >=1,000 patch pipeline
+│   ├── acquire_satellite_data.py       # Core STAC acquisition & harmonization
 │   ├── train.py                        # Model training loop
 │   ├── evaluate.py                     # Independent test evaluation
 │   ├── predict.py                      # Single-patch/scene inference
 │   ├── statistical_sensor_analysis.py  # Multi-sensor statistical engine
+│   ├── sync_dataset_to_gdrive.py       # Google Drive archival tool
+│   ├── generate_illustrations.py       # Publication diagram generator
 │   ├── build_presentation.py           # PowerPoint presentation builder
 │   └── generate_notebooks.py           # Notebook suite generator
 ├── src/
@@ -325,6 +359,23 @@ python scripts/evaluate.py --split test --threshold 0.50
 ### 6. Execute Multi-Sensor Statistical Comparison
 ```bash
 python scripts/statistical_sensor_analysis.py \
+    --s2-dir data/satellite_patches/s2_patches \
+    --landsat-dir data/satellite_patches/landsat_patches \
+    --mask-dir data/satellite_patches/masks \
+    --output-dir outputs/statistical_analysis \
+    --threshold 0.70 \
+    --bootstrap-iters 2000
+```
+
+### 7. Sync Complete Dataset to Persistent Storage / Google Drive
+```bash
+python scripts/sync_dataset_to_gdrive.py --target-dir /path/to/GoogleDrive/Attention_UNet_Glacier_Data
+```
+
+### 8. Build Complete 24-Slide Presentation
+```bash
+python scripts/build_presentation.py
+```
   --s2-dir data/satellite_patches/s2_patches \
   --landsat-dir data/satellite_patches/landsat_patches \
   --mask-dir data/satellite_patches/masks \

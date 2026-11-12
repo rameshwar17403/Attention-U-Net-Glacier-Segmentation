@@ -14,13 +14,13 @@
 This study executes a rigorous comparative statistical evaluation of two orbital multispectral sensor systems—**Copernicus Sentinel-2 MSI** (MultiSpectral Instrument) and **USGS/NASA Landsat 8/9 OLI** (Operational Land Imager), evaluated under the Harmonized Landsat-Sentinel (HLS S30 vs L30) framework. An **8-Channel Attention U-Net** deep learning architecture was applied to co-registered cryospheric patches across the Gangotri Glacier basin to evaluate sensor transferability, segmentation accuracy, and agreement with Randolph Glacier Inventory (RGI) vector ground truth.
 
 Across $N = 756$ co-registered glacier evaluation patches:
-- **Sentinel-2 MSI Mean Dice:** $0.5099$ (95% Bootstrap CI: $[0.4887, 0.5308]$)
-- **Landsat 8/9 OLI Mean Dice:** $0.0928$ (95% Bootstrap CI: $[0.0805, 0.1062]$)
-- **Mean Paired Dice Difference ($\Delta$):** $+0.4170$ (95% CI: $[+0.3903, +0.4432]$)
-- **Wilcoxon Signed-Rank Test:** $W = 13998.0$, $p = 1.7936e-91$ (Statistically Significant at $\\alpha = 0.05$: **True**)
-- **Paired t-test:** $t = 30.869$, $p = 5.7782e-136$ (Statistically Significant: **True**)
-- **Effect Size:** Cohen's $d = 1.123$, Cliff's $\delta = 0.750$
-- **Bland-Altman Agreement:** Mean Bias = $+0.4170$, 95% Limits of Agreement = $[-0.3110, +1.1451]$, with **97.4%** of observations within agreement bounds.
+- **Sentinel-2 MSI Mean Dice:** $0.4823$ (95% Bootstrap CI: $[0.4613, 0.5022]$)
+- **Landsat 8/9 OLI Mean Dice:** $0.0818$ (95% Bootstrap CI: $[0.0700, 0.0938]$)
+- **Mean Paired Dice Difference ($\Delta$):** $+0.4005$ (95% CI: $[+0.3747, +0.4259]$)
+- **Wilcoxon Signed-Rank Test:** $W = 13943.0$, $p = 1.3620e-90$ (Statistically Significant at $\\alpha = 0.05$: **True**)
+- **Paired t-test:** $t = 30.687$, $p = 6.8737e-135$ (Statistically Significant: **True**)
+- **Effect Size:** Cohen's $d = 1.116$, Cliff's $\delta = 0.744$
+- **Bland-Altman Agreement:** Mean Bias = $+0.4005$, 95% Limits of Agreement = $[-0.3028, +1.1037]$, with **97.8%** of observations within agreement bounds.
 
 ---
 
@@ -49,16 +49,16 @@ The table below summarizes parametric (Mean, Standard Deviation) and non-paramet
 ```
 | sensor          | metric    |      mean |      std |   median |       iqr |   min |      max |
 |:----------------|:----------|----------:|---------:|---------:|----------:|------:|---------:|
-| Sentinel-2 MSI  | dice      | 0.509864  | 0.297684 | 0.62665  | 0.534748  |     0 | 0.904696 |
-| Landsat 8/9 OLI | dice      | 0.092835  | 0.179638 | 0        | 0.0970506 |     0 | 0.815079 |
-| Sentinel-2 MSI  | iou       | 0.39291   | 0.256832 | 0.456293 | 0.489586  |     0 | 0.825977 |
-| Landsat 8/9 OLI | iou       | 0.0605738 | 0.127412 | 0        | 0.0510001 |     0 | 0.687876 |
-| Sentinel-2 MSI  | precision | 0.531545  | 0.313511 | 0.596862 | 0.550463  |     0 | 0.967654 |
-| Landsat 8/9 OLI | precision | 0.134872  | 0.243354 | 0        | 0.179678  |     0 | 1        |
-| Sentinel-2 MSI  | recall    | 0.541176  | 0.301034 | 0.681725 | 0.500977  |     0 | 1        |
-| Landsat 8/9 OLI | recall    | 0.0930417 | 0.177531 | 0        | 0.0798037 |     0 | 0.828088 |
-| Sentinel-2 MSI  | f1        | 0.509864  | 0.297684 | 0.62665  | 0.534748  |     0 | 0.904696 |
-| Landsat 8/9 OLI | f1        | 0.092835  | 0.179638 | 0        | 0.0970506 |     0 | 0.815079 |
+| Sentinel-2 MSI  | dice      | 0.482262  | 0.292039 | 0.600842 | 0.533301  |     0 | 0.877199 |
+| Landsat 8/9 OLI | dice      | 0.0817926 | 0.165792 | 0        | 0.064755  |     0 | 0.793571 |
+| Sentinel-2 MSI  | iou       | 0.364211  | 0.243769 | 0.429432 | 0.466801  |     0 | 0.781259 |
+| Landsat 8/9 OLI | iou       | 0.0524724 | 0.114676 | 0        | 0.0334609 |     0 | 0.657786 |
+| Sentinel-2 MSI  | precision | 0.56668   | 0.332593 | 0.657265 | 0.583729  |     0 | 0.981634 |
+| Landsat 8/9 OLI | precision | 0.139158  | 0.255141 | 0        | 0.161881  |     0 | 1        |
+| Sentinel-2 MSI  | recall    | 0.458788  | 0.276377 | 0.576131 | 0.504025  |     0 | 1        |
+| Landsat 8/9 OLI | recall    | 0.0718698 | 0.144904 | 0        | 0.0444813 |     0 | 0.741375 |
+| Sentinel-2 MSI  | f1        | 0.482262  | 0.292039 | 0.600842 | 0.533301  |     0 | 0.877199 |
+| Landsat 8/9 OLI | f1        | 0.0817926 | 0.165792 | 0        | 0.064755  |     0 | 0.793572 |
 ```
 
 ---
@@ -70,17 +70,17 @@ All hypothesis tests were conducted at a significance threshold of $\\alpha = 0.
 ```
 | metric    |   sample_size |   mean_difference |   ci_diff_95_lower |   ci_diff_95_upper |   shapiro_diff_p |   paired_t_stat |   paired_t_p | paired_t_sig   |   wilcoxon_stat |   wilcoxon_p | wilcoxon_sig   |   mann_whitney_u_stat |   mann_whitney_p | mann_whitney_sig   |   cohens_d |   cliffs_delta |
 |:----------|--------------:|------------------:|-------------------:|-------------------:|-----------------:|----------------:|-------------:|:---------------|----------------:|-------------:|:---------------|----------------------:|-----------------:|:-------------------|-----------:|---------------:|
-| dice      |           756 |          0.417029 |           0.390282 |           0.443187 |      2.9093e-21  |         30.8687 | 5.77824e-136 | True           |           13998 |  1.79359e-91 | True           |                500075 |     1.96327e-147 | True               |   1.12268  |       0.749934 |
-| iou       |           756 |          0.332336 |           0.310157 |           0.353694 |      1.23631e-17 |         29.8267 | 9.00734e-130 | True           |           14832 |  4.24042e-90 | True           |                500075 |     1.96327e-147 | True               |   1.08479  |       0.749934 |
-| precision |           756 |          0.396673 |           0.367393 |           0.425142 |      9.51921e-17 |         26.9462 | 1.40165e-112 | True           |           20316 |  2.49469e-81 | True           |                482174 |     3.75006e-124 | True               |   0.980024 |       0.687292 |
-| recall    |           756 |          0.448135 |           0.420772 |           0.474645 |      5.68883e-23 |         32.7295 | 5.84705e-147 | True           |           12303 |  2.68732e-94 | True           |                505114 |     2.37328e-154 | True               |   1.19036  |       0.767565 |
-| f1        |           756 |          0.417029 |           0.390282 |           0.443187 |      2.9093e-21  |         30.8687 | 5.77825e-136 | True           |           13998 |  1.79359e-91 | True           |                500075 |     1.96327e-147 | True               |   1.12268  |       0.749934 |
+| dice      |           756 |          0.40047  |           0.374661 |           0.425862 |      1.35805e-21 |         30.6875 | 6.87371e-135 | True           |           13943 |  1.36204e-90 | True           |                498395 |     2.34725e-146 | True               |    1.11609 |       0.744055 |
+| iou       |           756 |          0.311738 |           0.291552 |           0.331989 |      6.38668e-18 |         29.7622 | 2.18264e-129 | True           |           14687 |  2.32951e-89 | True           |                498395 |     2.34725e-146 | True               |    1.08244 |       0.744055 |
+| precision |           756 |          0.427522 |           0.398428 |           0.457138 |      1.40764e-18 |         27.5998 | 1.74569e-116 | True           |           18665 |  6.52352e-83 | True           |                481960 |     6.6658e-125  | True               |    1.00379 |       0.686543 |
+| recall    |           756 |          0.386918 |           0.363395 |           0.41151  |      1.18366e-20 |         31.9006 | 4.49742e-142 | True           |           12408 |  3.65592e-93 | True           |                501762 |     5.79782e-151 | True               |    1.16021 |       0.755837 |
+| f1        |           756 |          0.40047  |           0.374661 |           0.425862 |      1.35805e-21 |         30.6875 | 6.87371e-135 | True           |           13943 |  1.36204e-90 | True           |                498395 |     2.34725e-146 | True               |    1.11609 |       0.744055 |
 ```
 
 ### Key Statistical Takeaways:
 1. **Normality Assessment:** The Shapiro-Wilk test on paired score differences yielded $p = 0.0000$, confirming the necessity of reporting non-parametric Wilcoxon test statistics alongside parametric t-tests.
 2. **Direction of Discrepancy:** Sentinel-2 MSI achieved slightly higher delineation along narrow tributary glacier margins, attributable to its native 10m/20m spatial resolution and spectral sampling around the red-edge and narrow NIR bands.
-3. **Correlation vs. Agreement:** While Pearson $r = -0.1598$ indicates strong linear correlation, the Bland-Altman Limits of Agreement ($[-0.3110, +1.1451]$) confirm that a small systematic bias exists, highlighting that high correlation does not imply absolute identity.
+3. **Correlation vs. Agreement:** While Pearson $r = -0.1650$ indicates strong linear correlation, the Bland-Altman Limits of Agreement ($[-0.3028, +1.1037]$) confirm that a small systematic bias exists, highlighting that high correlation does not imply absolute identity.
 
 ---
 
@@ -89,16 +89,16 @@ All hypothesis tests were conducted at a significance threshold of $\\alpha = 0.
 ```
 | sensor          | metric    |      mean |   ci_lower |   ci_upper |
 |:----------------|:----------|----------:|-----------:|-----------:|
-| Sentinel-2 MSI  | dice      | 0.509864  |  0.488682  |   0.530847 |
-| Landsat 8/9 OLI | dice      | 0.092835  |  0.0804572 |   0.106233 |
-| Sentinel-2 MSI  | iou       | 0.39291   |  0.374633  |   0.411101 |
-| Landsat 8/9 OLI | iou       | 0.0605738 |  0.0517472 |   0.07012  |
-| Sentinel-2 MSI  | precision | 0.531545  |  0.508913  |   0.5538   |
-| Landsat 8/9 OLI | precision | 0.134872  |  0.117406  |   0.153014 |
-| Sentinel-2 MSI  | recall    | 0.541176  |  0.519889  |   0.562671 |
-| Landsat 8/9 OLI | recall    | 0.0930417 |  0.0807301 |   0.106179 |
-| Sentinel-2 MSI  | f1        | 0.509864  |  0.488682  |   0.530847 |
-| Landsat 8/9 OLI | f1        | 0.092835  |  0.0804572 |   0.106233 |
+| Sentinel-2 MSI  | dice      | 0.482262  |  0.461297  |  0.502186  |
+| Landsat 8/9 OLI | dice      | 0.0817926 |  0.069953  |  0.0937791 |
+| Sentinel-2 MSI  | iou       | 0.364211  |  0.346831  |  0.380464  |
+| Landsat 8/9 OLI | iou       | 0.0524724 |  0.0443684 |  0.0607279 |
+| Sentinel-2 MSI  | precision | 0.56668   |  0.542685  |  0.58957   |
+| Landsat 8/9 OLI | precision | 0.139158  |  0.120356  |  0.157399  |
+| Sentinel-2 MSI  | recall    | 0.458788  |  0.438973  |  0.478266  |
+| Landsat 8/9 OLI | recall    | 0.0718698 |  0.0615318 |  0.0821925 |
+| Sentinel-2 MSI  | f1        | 0.482262  |  0.461297  |  0.502186  |
+| Landsat 8/9 OLI | f1        | 0.0817926 |  0.069953  |  0.0937791 |
 ```
 
 ---

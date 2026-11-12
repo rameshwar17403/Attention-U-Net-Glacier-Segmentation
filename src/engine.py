@@ -1,6 +1,4 @@
 import torch
-from tqdm import tqdm
-from src.metrics import compute_metrics
 
 def train_epoch(model, dataloader, criterion, optimizer, device):
     model.train()
@@ -19,8 +17,13 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
         optimizer.step()
 
         running_loss += loss.item() * patches.size(0)
-        metrics = compute_metrics(logits, masks, threshold=0.5)
-        running_dice += metrics['dice'] * patches.size(0)
+        
+        # Fast GPU tensor-based dice without multi-item CPU sync
+        with torch.no_grad():
+            preds = (logits > 0.0).float()
+            inter = (preds * masks).sum()
+            union = preds.sum() + masks.sum() + 1e-8
+            running_dice += ((2.0 * inter) / union).item() * patches.size(0)
 
     epoch_loss = running_loss / len(dataloader.dataset)
     epoch_dice = running_dice / len(dataloader.dataset)
@@ -29,7 +32,9 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 def validate_model(model, dataloader, criterion, device, threshold=0.5):
     model.eval()
     running_loss = 0.0
-    total_tp, total_fp, total_fn, total_tn = 0, 0, 0, 0
+    tp_tensor = torch.zeros(1, device=device)
+    fp_tensor = torch.zeros(1, device=device)
+    fn_tensor = torch.zeros(1, device=device)
 
     with torch.no_grad():
         for patches, masks in dataloader:
@@ -38,17 +43,20 @@ def validate_model(model, dataloader, criterion, device, threshold=0.5):
             loss = criterion(logits, masks)
 
             running_loss += loss.item() * patches.size(0)
-            metrics = compute_metrics(logits, masks, threshold=threshold)
-            total_tp += metrics['tp']
-            total_fp += metrics['fp']
-            total_fn += metrics['fn']
-            total_tn += metrics['tn']
+            preds = (torch.sigmoid(logits) >= threshold).float()
+            tp_tensor += (preds * masks).sum()
+            fp_tensor += (preds * (1.0 - masks)).sum()
+            fn_tensor += ((1.0 - preds) * masks).sum()
 
     eps = 1e-8
+    tp = tp_tensor.item()
+    fp = fp_tensor.item()
+    fn = fn_tensor.item()
+
     val_loss = running_loss / len(dataloader.dataset)
-    dice = (2.0 * total_tp) / (2.0 * total_tp + total_fp + total_fn + eps)
-    iou = total_tp / (total_tp + total_fp + total_fn + eps)
-    precision = total_tp / (total_tp + total_fp + eps)
-    recall = total_tp / (total_tp + total_fn + eps)
+    dice = (2.0 * tp) / (2.0 * tp + fp + fn + eps)
+    iou = tp / (tp + fp + fn + eps)
+    precision = tp / (tp + fp + eps)
+    recall = tp / (tp + fn + eps)
 
     return val_loss, {"dice": dice, "iou": iou, "precision": precision, "recall": recall}
