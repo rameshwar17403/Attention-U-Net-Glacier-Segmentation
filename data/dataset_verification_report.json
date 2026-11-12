@@ -1,0 +1,98 @@
+{
+  "dataset_verification_status": "VERIFIED_GENUINE",
+  "minimum_patch_requirement": 1000,
+  "total_valid_patches_extracted": 1466,
+  "requirement_satisfied": true,
+  "spatial_grid": {
+    "coordinate_reference_system": "EPSG:32644",
+    "spatial_resolution_meters": 30.0,
+    "basin_grid_dimensions": [
+      1689,
+      1620
+    ],
+    "total_basin_pixels": 2736180,
+    "bounding_box_wgs84": [
+      78.95,
+      30.7,
+      79.45,
+      31.15
+    ]
+  },
+  "patch_dimensions": {
+    "patch_height": 256,
+    "patch_width": 256,
+    "channels": 8,
+    "channel_names": [
+      "B02_Blue",
+      "B03_Green",
+      "B04_Red",
+      "B08_NIR",
+      "B11_SWIR1",
+      "B12_SWIR2",
+      "NDSI",
+      "NDVI"
+    ]
+  },
+  "split_counts": {
+    "train": 734,
+    "val": 552,
+    "test": 180,
+    "train_ratio": 0.501,
+    "val_ratio": 0.377,
+    "test_ratio": 0.123
+  },
+  "glacier_distribution": {
+    "patches_with_glacier": 1434,
+    "patches_without_glacier": 32,
+    "total_glacier_pixels": 26068439,
+    "glacier_pixel_percentage": 27.13
+  },
+  "satellite_scenes": {
+    "sentinel2": [
+      {
+        "id": "S2B_44RLV_20211120_1_L2A",
+        "year": 2021,
+        "date": "2021-11-20",
+        "split": "train"
+      },
+      {
+        "id": "S2A_44RLV_20221028_0_L2A",
+        "year": 2022,
+        "date": "2022-10-28",
+        "split": "train"
+      },
+      {
+        "id": "S2A_44RLV_20231112_0_L2A",
+        "year": 2023,
+        "date": "2023-11-12",
+        "split": "val"
+      },
+      {
+        "id": "S2B_44RLV_20241015_0_L2A",
+        "year": 2024,
+        "date": "2024-10-15",
+        "split": "test"
+      }
+    ],
+    "landsat": [
+      {
+        "id": "LC09_L2SP_146039_20241026_02_T1",
+        "year": 2024,
+        "date": "2024-10-26",
+        "platform": "Landsat-9"
+      },
+      {
+        "id": "LC08_L2SP_145038_20231009_02_T1",
+        "year": 2023,
+        "date": "2023-10-09",
+        "platform": "Landsat-8"
+      }
+    ]
+  },
+  "rgi_ground_truth": {
+    "inventory": "Randolph Glacier Inventory 6.0 Region 15",
+    "glacier_count_in_basin": 331,
+    "primary_glacier": "Gangotri Glacier (RGI60-15.06881)",
+    "glacier_area_km2": 686.77
+  }
+}

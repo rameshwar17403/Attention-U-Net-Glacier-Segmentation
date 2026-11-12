@@ -13,29 +13,25 @@ env/
 venv/
 ENV/
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Large satellite rasters, raw downloads & model checkpoints
+# Large satellite rasters, numpy arrays, raw downloads & model weights
+*.npy
+*.npz
+*.tif
+*.tiff
+*.zip
+*.tar.gz
+*.pth
+*.pt
 data/raw/
-data/patches/*.npy
+data/patches/
 data/satellite_patches/
-outputs/checkpoints/*.pth
+outputs/checkpoints/
+models/attention_unet/*.pth
+
+# Allow dataset metadata and reports to be tracked
+!data/dataset_inventory.csv
+!data/dataset_verification_report.json
+!data/README.md
 
 # OS generated files
 .DS_Store

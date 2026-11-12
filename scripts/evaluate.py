@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--checkpoint", type=str, default="outputs/checkpoints/best_model.pth", help="Path to model weights")
     parser.add_argument("--data-dir", type=str, default="data/patches", help="Path to dataset directory")
     parser.add_argument("--threshold", type=float, default=0.50, help="Classification decision threshold")
+    parser.add_argument("--split", type=str, default="test", help="Dataset split to evaluate: 'test', 'val', 'train', or 'all'")
     parser.add_argument("--output-dir", type=str, default="outputs/evaluation", help="Directory for evaluation exports")
     args = parser.parse_args()
 
@@ -37,7 +38,13 @@ def main():
         device = torch.device("cpu")
     print(f"[*] Evaluation running on device: {device}")
 
-    dataset = GlacierDataset(args.data_dir)
+    inv_csv = os.path.join(repo_root, "data", "dataset_inventory.csv")
+    split_arg = None if args.split == "all" else args.split
+    if os.path.exists(inv_csv) and split_arg:
+        print(f"[+] Loading '{split_arg}' split from {inv_csv}")
+        dataset = GlacierDataset(args.data_dir, split=split_arg, inventory_csv=inv_csv)
+    else:
+        dataset = GlacierDataset(args.data_dir)
     if len(dataset) == 0:
         print(f"[!] No patches found in '{args.data_dir}'. Aborting evaluation.")
         return
